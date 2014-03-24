@@ -37,7 +37,12 @@
 		}
 		
 		if (handler) {
-			handler(finalObject, responseWrapper.meta, error);
+			// XXX(bryan): Unboxing can be done on a background thread, but
+			// callbacks should always run on the main thread. In order to
+			// merge this upstream, this should be made configurable.
+			dispatch_async(dispatch_get_main_queue(), ^{
+				handler(finalObject, responseWrapper.meta, error);
+			});
 		}
 	};
 }
@@ -79,7 +84,10 @@
 	return ^(AFHTTPRequestOperation *operation, id responseObject) {
 		ANKAPIResponse *response = (ANKAPIResponse *)responseObject;
 		if (handler) {
-			handler(response.data, response.meta, nil);
+			// XXX(bryan): See above.
+			dispatch_async(dispatch_get_main_queue(), ^{
+				handler(response.data, response.meta, nil);
+			});
 		}
 	};
 }
@@ -90,7 +98,10 @@
 		ANKAPIResponse *response = error.userInfo[kANKAPIResponseKey];
 		
 		if (handler) {
-			handler(nil, response.meta, error);
+			// XXX(bryan): See above.
+			dispatch_async(dispatch_get_main_queue(), ^{
+				handler(nil, response.meta, error);
+			});
 		}
 	};
 }
